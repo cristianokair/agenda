@@ -25,6 +25,10 @@ int proximoId();
 void entradaDados();
 void fileInToArray();
 
+/*
+    Function: main() 
+    Description:  Chama todas as funções do programa Agenda de Contatos
+*/
 void main() {
     int opcao;
     char userInput[BUFFER_SIZE];
@@ -75,6 +79,13 @@ void main() {
     } while (opcao != 5);
 }
 
+/*
+    Function: incluirContato(args)
+    Args:   char nome
+            char tel
+            char email
+    Description: escreverá no final do arquivo os inputs
+*/
 void incluirContato(char nome[BUFFER_SIZE],char tel[BUFFER_SIZE],char email[BUFFER_SIZE]){
     int id = proximoId();
     FILE *agenda = fopen("agenda.txt","a");
@@ -82,7 +93,12 @@ void incluirContato(char nome[BUFFER_SIZE],char tel[BUFFER_SIZE],char email[BUFF
     fclose(agenda);
 }
 
+/*
+    Function: listarContato
+    Description: imprimirá em tela todos as linhas que estiverem Ativo = 1
+*/
 void listarContato(){
+    fflush(stdin);
     FILE *arquivo = fopen("agenda.txt","r");
     char str[128];
     int result;
@@ -114,6 +130,10 @@ void listarContato(){
     getchar();
 }
 
+/*
+    Function: finalizar
+    Description: encerra o programa
+*/
 int finalizar(){
     clrscr();
     printf("--------------------------------------------------------\n");
@@ -123,6 +143,10 @@ int finalizar(){
     return 0;
 }
 
+/*
+    Function: excluirContato
+    Description: altera campo Ativo para 0 (dados persistem no banco de dados)
+*/
 void excluirContato (){
     FILE *arquivo = fopen("agenda.txt","r");
     FILE *copia = fopen("copia.txt","a");
@@ -132,8 +156,8 @@ void excluirContato (){
     printf("--------------------------------------------------------\n");
     printf("--------------------EXCLUIR CONTATO---------------------\n");
     printf("--------------------------------------------------------\n\n");
-    printf("\n\n\t\tEscolha o contato a ser excluído pelo seu id\n");
     listarContato();
+    printf("\n\n\t\tEscolha o contato a ser excluído pelo seu id\n");
     printf("\nOpção: ");
     
     scanf("%d", &opcao);
@@ -156,6 +180,10 @@ void excluirContato (){
 
 }
 
+/*
+    Function: fileInToArray
+    Description: cria vetor com os dados para facilitar manipulação das demais funções
+*/
 void fileInToArray (){
     FILE *arquivo = fopen("agenda.txt","r");
 
@@ -188,19 +216,68 @@ void fileInToArray (){
         }
         i++;
     }
-
-    for (int j = 0; j < row_count; j++)
-    {
-        printf("ID: %d, Ativo: %d, Nome: %s, Tel: %s, Email: %s\n", contatos[j].codigo, contatos[j].ativo, contatos[j].nome, contatos[j].celular, contatos[j].email);
-    }
-
+    
     fclose(arquivo);
 }
 
+/*
+    Function: alterarContato
+    Description: pesquisa e altera dados pelo ID informado
+*/
 void alterarContato (){
-    printf("tchau");
+    FILE *arquivo = fopen("agenda.txt","r");
+    FILE *copia = fopen("copia.txt","a");
+    char userInput[BUFFER_SIZE], nome[BUFFER_SIZE], tel[BUFFER_SIZE], email[BUFFER_SIZE];
+    int opcao = 0, i = 0;
+    int tamanho = proximoId();
+    clrscr();
+    printf("--------------------------------------------------------\n");
+    printf("---------------------EDITAR CONTATO---------------------\n");
+    printf("--------------------------------------------------------\n\n");
+    listarContato();
+    printf("\n\n\t\tEscolha o contato a ser editado pelo seu id\n");
+    printf("\nID do contato: ");
+    
+    sscanf(fgets(userInput, BUFFER_SIZE-1, stdin),"%d", &opcao);
+    fflush(stdin);
+
+    for (int j = 0; j < tamanho-1; j++)
+    {
+        if (opcao != contatos[j].codigo)
+        {
+            fprintf(copia, "%d;%d;%s;%s;%s", contatos[j].codigo, contatos[j].ativo, contatos[j].nome, contatos[j].celular, contatos[j].email);
+        }else
+        {
+            printf("\n\tDados do contato\n");
+            printf("\tID: %d\n", contatos[j].codigo);
+            printf("\tNome: %s\n", contatos[j].nome);
+            printf("\tCelular: %s\n", contatos[j].celular);
+            printf("\tEmail: %s\n", contatos[j].email);
+            printf("\t ---- Altere seu contato. ----\n");
+            printf("\t ---- Alterar um contato inativo o tornará ativo. ----\n");
+            printf("\nDigite um nome: ");
+            sscanf(fgets(userInput, BUFFER_SIZE-1, stdin),"%[^\n]", nome);
+            fflush(stdin);
+            printf("\nDigite um telefone: ");
+            sscanf(fgets(userInput, BUFFER_SIZE-1, stdin),"%[^\n]", tel);
+            fflush(stdin);
+            printf("\nDigite um email: ");
+            sscanf(fgets(userInput, BUFFER_SIZE-1, stdin),"%[^\n]", email);
+            fflush(stdin);
+            fprintf(copia, "%d;%d;%s;%s;%s\n", contatos[j].codigo, 1, nome, tel, email);
+        }
+    }
+    fclose(arquivo);
+    fclose(copia);
+    remove("agenda.txt");
+    rename("copia.txt", "agenda.txt");
+
 }
 
+/*
+    Function: proximoId
+    Description: verifica qual próximo ID possível / quantas linhas tem o arquivo .txt
+*/
 int proximoId(){
     FILE *arquivo = fopen("agenda.txt","r");
     char c, letra = '\n';
@@ -213,20 +290,68 @@ int proximoId(){
     fclose(arquivo);
     return vezes;
 }
-/**< LIMPA A TELA */
 
+/*
+    Function: clrscr
+    Description: limpa a tela
+*/
 void clrscr()
 {
     system("@cls||clear");
 }
 
+/*
+    Function: entradaDados
+    Description: capta dados do stdin e valida alguns possíveis erros.
+*/
 void entradaDados(){
-    char userInput[BUFFER_SIZE];
+    char userInput[BUFFER_SIZE], tmpEmail[BUFFER_SIZE];
+    int condSaidaWhile = 1;
     printf("\nDigite um nome: ");
     sscanf(fgets(userInput, BUFFER_SIZE-1, stdin),"%[^\n]", contato.nome);
     printf("\nDigite um telefone: ");
     sscanf(fgets(userInput, BUFFER_SIZE-1, stdin),"%[^\n]", contato.celular);
-    printf("\nDigite um email: ");
-    sscanf(fgets(userInput, BUFFER_SIZE-1, stdin),"%[^\n]", contato.email);
+    while (condSaidaWhile)
+    { 
+        printf("\nDigite um email: ");
+        sscanf(fgets(userInput, BUFFER_SIZE-1, stdin),"%[^\n]", tmpEmail);
+            int tam=strlen(tmpEmail);
+            int arroba = 0, ponto = 0, antesPonto = 0, depoisPonto = 0, i;
+            
+            for (i = 0; i < tam; i++) {
+                char c = tmpEmail[i];
+                if(c == '@') {
+                if (arroba)
+                    break; // não pode ter uma segunda @
+                arroba = 1;
+                if (i < 3)
+                    break; // se @ vier antes de 3 caracteres, erro
+                }
+                else if (arroba) { // se já encontrou @
+                if (ponto) { // se já encontrou . depois de @
+                    depoisPonto++;
+                }
+                else if(c == '.') {
+                    ponto = 1;
+                    if (antesPonto < 3) {
+                    break; // se . depois de @ vier antes de 3 caracteres, erro
+                    }
+                }
+                else {
+                    antesPonto++;
+                }
+                }
+            } // for
+            
+            if (i == tam && depoisPonto > 1){
+                strcpy(contato.email,tmpEmail);
+                printf("Valido");
+                break;
+            }
+            else{
+                printf("Invalido");
+            }
+    }
+
     fflush(stdin);
  }
